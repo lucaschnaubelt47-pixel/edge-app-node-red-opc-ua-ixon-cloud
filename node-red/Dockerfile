@@ -1,8 +1,8 @@
 FROM nodered/node-red:4.0.3-22
 
 RUN npm install \
-  node-red-contrib-opcua \
-  node-red-dashboard
+  node-red-contrib-opcua@0.2.344 \
+  node-red-dashboard@3.6.6
 
 # Additional Node-RED protocol nodes (commented for inspiration):
 # Uncomment the relevant lines below to add support for other protocols as needed:
