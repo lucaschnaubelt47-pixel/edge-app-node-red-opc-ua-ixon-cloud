@@ -1,7 +1,10 @@
-FROM nodered/node-red:4.0.3-22
+# Node-RED 5.x is required: its node loader uses dynamic import() instead of
+# require(), so it can load node-red-contrib-opcua's ESM-only node-opcua deps.
+# Node-RED 4.x fails to load them with ERR_REQUIRE_ESM.
+FROM nodered/node-red:5.0.0-24
 
 RUN npm install \
-  node-red-contrib-opcua@0.2.344 \
+  node-red-contrib-opcua@0.2.352 \
   node-red-dashboard@3.6.6
 
 # Additional Node-RED protocol nodes (commented for inspiration):
