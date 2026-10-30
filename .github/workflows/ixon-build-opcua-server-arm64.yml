@@ -1,0 +1,40 @@
+
+name: Build IXON OPC UA Server ARM64
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-opcua-server:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout IXON project
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build OPC UA Server for ARM64/v8
+        run: |
+          docker buildx build \
+            --platform linux/arm64/v8 \
+            --file opcua-server/Dockerfile \
+            --tag opcua-server:ixon-arm64-v8 \
+            --output type=docker,dest=/tmp/opcua-server.tar \
+            ./opcua-server
+
+      - name: Compress Docker image
+        run: gzip -1 /tmp/opcua-server.tar
+
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ixon-opcua-server-arm64-v8
+          path: /tmp/opcua-server.tar.gz
+          retention-days: 7
+          compression-level: 0
