@@ -7,8 +7,8 @@ RUN npm install \
     node-red-contrib-opcua@0.2.352 \
     node-red-dashboard@3.6.6 \
     node-red-contrib-influxdb@0.7.0 \
-    node-red-contrib-modbus@5.62.1
-    node-red-contrib-ftp-client@0.1.11
+    node-red-contrib-modbus@5.62.1 \
+    node-red-contrib-ftp-client@0.1.11 
 
 # Additional Node-RED protocol nodes (commented for inspiration):
 # Uncomment the relevant lines below to add support for other protocols as needed:
