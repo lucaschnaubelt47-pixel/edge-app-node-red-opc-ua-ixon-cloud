@@ -1,47 +1,98 @@
-# Node-RED 5.x is required: its node loader uses dynamic import() instead of
-# require(), so it can load node-red-contrib-opcua's ESM-only node-opcua deps.
-# Node-RED 4.x fails to load them with ERR_REQUIRE_ESM.
+
+# =====================================================
+# IXON Node-RED ARM64
+# Node-RED 5.0.0 / Node.js 24
+#
+# Bestehende Module:
+# - OPC UA
+# - Dashboard
+# - InfluxDB
+# - Modbus
+# - FTP
+#
+# Neu:
+# - SQLite 2.0.1
+# - Native ARM64-Kompilierung
+# - SQLite-Funktionstest beim Build
+# =====================================================
+
 FROM nodered/node-red:5.0.0-24
 
+# -----------------------------------------------------
+# SQLite Build-Abhaengigkeiten
+# -----------------------------------------------------
+
+USER root
+
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    linux-headers
+
+# Zurueck zum normalen Node-RED-Benutzer
+USER node-red
+
+WORKDIR /usr/src/node-red
+
+# -----------------------------------------------------
+# Bisherige Node-RED-Erweiterungen
+# -----------------------------------------------------
+
 RUN npm install \
+    --no-audit \
+    --no-fund \
     node-red-contrib-opcua@0.2.352 \
     node-red-dashboard@3.6.6 \
     node-red-contrib-influxdb@0.7.0 \
     node-red-contrib-modbus@5.62.1 \
-    node-red-contrib-ftp-client@0.1.11 
+    node-red-contrib-ftp-client@0.1.11
 
-# Additional Node-RED protocol nodes (commented for inspiration):
-# Uncomment the relevant lines below to add support for other protocols as needed:
+# -----------------------------------------------------
+# Neu: SQLite fuer Keyence-Referenzstatistik
+# -----------------------------------------------------
 
-# Modbus (for Modbus TCP communication with PLCs)
-# RUN npm install node-red-contrib-modbus
+# Native Bibliothek fuer die Containerarchitektur
+# kompilieren und installieren.
 
-# Siemens S7 (for communication with Siemens PLCs)
-# RUN npm install node-red-contrib-s7
+RUN npm_config_build_from_source=true \
+    npm install \
+    --no-audit \
+    --no-fund \
+    node-red-node-sqlite@2.0.1
 
-# Ethernet/IP (for Rockwell/Allen-Bradley PLCs)
-# RUN npm install node-red-contrib-ethernet-ip
+# -----------------------------------------------------
+# SQLite-Funktionstest beim GitHub-Build
+# -----------------------------------------------------
 
-# Mitsubishi MELSEC (for Mitsubishi PLC communication)
-# RUN npm install node-red-contrib-mcprotocol
+RUN node -e "\
+const m=require('node:module'); \
+const r=m.createRequire(require.resolve('node-red-node-sqlite/package.json')); \
+const sqlite3=r('sqlite3'); \
+const db=new sqlite3.Database(':memory:'); \
+db.get('SELECT 1 AS ok',(err,row)=>{ \
+if(err||!row||row.ok!==1){ \
+console.error(err||row); \
+process.exitCode=1; \
+} \
+db.close(); \
+});"
+
+# -----------------------------------------------------
+# Bestehende Flow-Konfiguration beibehalten
+# -----------------------------------------------------
 
 COPY flows.json /data/flows.json
 
-# Expose Node-RED's default port
+# -----------------------------------------------------
+# Ports
+# -----------------------------------------------------
+
 EXPOSE 1880
-# Expose OPCUA port
-# EXPOSE 50000
 
-# Expose Modbus TCP port
-# EXPOSE 502
-
-# Expose Siemens S7 ports
-# EXPOSE 102
-
-# Expose Ethernet/IP ports
-# EXPOSE 44818
-
-# Expose Mitsubishi MELSEC port
-# EXPOSE 1025
+# -----------------------------------------------------
+# Node-RED starten
+# -----------------------------------------------------
 
 CMD ["npm", "start"]
+
